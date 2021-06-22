@@ -16,6 +16,7 @@ keywords = ["deep-learning", "dial-app" , "visualization", "CNN"]
 [tool.poetry.dependencies]
 python = ">=3.6.0,<=3.8.3"
 dial-core = { git="https://github.com/JDM-ULL-93/dial-core" }
+dial-gui = { git="https://github.com/JDM-ULL-93/dial-gui" }
 
 PySide2 = "^5.12.6"
 tensorflow  = "^2.4.0"
