@@ -53,7 +53,7 @@ class VanillaOclussion(object):
         ###################################
        
         from concurrent.futures import ThreadPoolExecutor
-        with ThreadPoolExecutor(max_workers=cores) as executor:
+        with ThreadPoolExecutor(max_workers=cores) as executor: #Preparamos imagenes en hilos aparte.
             for h in range(output_height):
                 for w in range(output_width):
                     executor.submit(prepareInputImagesProc,
@@ -79,6 +79,6 @@ class VanillaOclussion(object):
         saliencyCoeffs = saliencyCoeffs.resize((inputSize[1], inputSize[0]), 1)
         saliencyCoeffs = img_to_array(saliencyCoeffs)
         from ..ImageUtils import ImageUtils
-        return ImageUtils.overlay(img_array[0], ImageUtils.normalize(saliencyCoeffs), emphasize = False)
+        return ImageUtils.overlay(img_array[0], ImageUtils.normalize(saliencyCoeffs), emphasize = True)
 
 

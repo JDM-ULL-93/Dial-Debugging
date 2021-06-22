@@ -1,22 +1,20 @@
 # vim: ft=python fileencoding=utf-8 sts=4 sw=4 et:
 
-"""This package has the basic nodes that can be placed on the Node Editor.
+"""This package has the visualization nodes that can be placed on the Node Editor.
 
-From editing datasets to compiling models, this nodes should satisfy most of the needs
-when working with classical Deep Learning problems.
+It includes several visualization techniques to understand
 """
 
 from dial_core.node_editor import NodeRegistrySingleton
 from dial_core.notebook import NodeCellsRegistrySingleton
 
-
-from conv_visualization import(
+from .conv_visualization import(
     ConvVisualizationNode,
     ConvVisualizationNodeCells,
     ConvVisualizationNodeFactory
 )
 
-from preprocessor_loader import(
+from .preprocessor_loader import(
     PreProcessorLoaderNode,
     PreProcessorLoaderNodeFactory
 )
