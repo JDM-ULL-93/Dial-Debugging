@@ -1,11 +1,23 @@
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union
+import tensorflow as tf
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Union, Callable
 class GradCAM(object):
     """description of class"""
-    def __init__(self, model,preprocessorFunction):
-        self._model = model
+    def __init__(self, model: tf.keras.Model ,preprocessorFunction : Callable):
+        self._copyModel = tf.keras.models.clone_model(model, clone_function = self.__removeSoftMax)
+        self._copyModel.set_weights(model.get_weights())
+        self._model = self._copyModel #model
         self._preprocessorFunction = preprocessorFunction
         return
 
+    def __removeSoftMax(self,layer):
+        """
+            Queremos que el gradiente se calcule con los "logits", esto es, el output de la red antes de ser procesado por
+            softmax.
+        """
+        newLayer = layer.__class__.from_config(layer.get_config())
+        if hasattr(newLayer,"activation") and newLayer.activation == tf.keras.activations.softmax:
+                newLayer.activation = tf.keras.activations.linear #No computa nada, deja pasar los valores --> f(x) = x
+        return newLayer
     def __findLastConvLayer(self,model):
         for layer in reversed(model.layers):
             if len(layer.output_shape) == 4:
@@ -16,7 +28,7 @@ class GradCAM(object):
                  img_array, 
                  predictIndex):
         #https://glassboxmedicine.com/2020/05/29/grad-cam-visual-explanations-from-deep-networks/
-        softmaxOutput = self._model.output
+        logitsOutput = self._model.output #Logits definition in CNN context: https://stackoverflow.com/a/50511692
         processed = self._preprocessorFunction(img_array.copy())
         convLayerOutput = self.__findLastConvLayer(self._model).output
         # Input Shape Format: (Nº Samples, Width, Height, Channels)
@@ -25,12 +37,12 @@ class GradCAM(object):
         import tensorflow as tf
         gradModel = tf.keras.Model(
             inputs = self._model.inputs,
-            outputs = [convLayerOutput,softmaxOutput]
+            outputs = [convLayerOutput,logitsOutput]
         )
         import numpy as np
         with tf.GradientTape() as tape:
             inputs = tf.cast(processed, tf.float32)
-            (convOuts, preds) = gradModel(inputs)  # preds after softmax
+            (convOuts, preds) = gradModel(inputs)  # preds before softmax
             predictIndex = np.argmax(preds) if predictIndex < 0 else predictIndex #ToDo: Documentar que si el indice es < a 0, lo que hace es buscar el top 1
             loss = preds[:, predictIndex]
 

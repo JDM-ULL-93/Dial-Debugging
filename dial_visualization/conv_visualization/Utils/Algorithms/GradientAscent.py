@@ -21,8 +21,8 @@ class GradientAscent(object):
         input_image = self._img.copy()
         for iteration in range(iterations):
             input_image,loss  = self.gradient_ascent_step(input_image, output_index, learning_rate)
-            if loss <= 0: #Por x razones, el gradiente no puede crecer más
-                break;
+            #if loss <= 0: #Por x razones, el gradiente no puede crecer más
+                #break;
         #return loss, self.__processImage(input_image.numpy()[0],0.5).round().astype(np.uint8)
         #from ..ImageUtils import ImageUtils
         #return loss, ImageUtils.processGradients(input_image.numpy()[0],0.3)
@@ -34,10 +34,11 @@ class GradientAscent(object):
         """
             Este metodo es el responsable de computar el gradiente
         """
+        img = tf.convert_to_tensor(img)
         with tf.GradientTape() as tape:
-            tape.watch(img) #La variable
+            tape.watch(tf.convert_to_tensor(img)) #La variable
             loss = self.compute_loss(img, output_index)
-        # Compute gradients --> d(Loss) / d(img)
+        # Compute gradients --> d(Loss) / d(img) . Derivada de la función 'loss' respecto a la variable(matriz de variables WxHx3) 'img'
         grads = tape.gradient(loss, img)
         # Normalize gradients.
         # +Info sobre la normalización L2:https://montjoile.medium.com/l0-norm-l1-norm-l2-norm-l-infinity-norm-7a7d18a4f40c
@@ -54,7 +55,7 @@ class GradientAscent(object):
         """
         filters = self._model(input_image)
         filter_activation = filters[:, :, :, output_index]
-        return tf.reduce_mean(filter_activation)
+        return filter_activation#tf.reduce_mean(filter_activation)
 
 
     def __initializeImage(self,shape,processor_function):

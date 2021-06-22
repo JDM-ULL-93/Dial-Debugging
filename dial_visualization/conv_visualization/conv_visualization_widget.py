@@ -290,7 +290,7 @@ class ConvVisualizationWidget(Form, Base):
         return image,imageArray
 
     def executeLoaders(self,
-                   images: 'Callable o List[np.ndarray]',
+                   images: Callable,
                    canvas : PySide2.QtWidgets.QGraphicsView,
                    imageModifier : Callable = None,
                    params : dict = {}) ->None:
@@ -308,17 +308,14 @@ class ConvVisualizationWidget(Form, Base):
 
         #Empezamos procesando y guardando las imagenes
         def loadWindowProc(self,
-                           item : 'Callable o str',
+                           item : Callable,
                            count: int,
                            imageModifier : Callable,
                            params : dict):
-            image,widgetTitle = None,'Grad-CAM'
-            if callable(item): #Función que se espera que devuelva 2 elementos, imagen y titulo de la ventana
-                image,widgetTitle = item()
-            elif type(item) is str: #String que se espera se trata de una ruta a fichero en disco
-                _,image = self.loadImageFromDisk(item)
-            if imageModifier is not None:
-                image = imageModifier(image,**params)#handler.createHeatmap(imageArray,0)
+            image,widgetTitle = None,''
+            image,widgetTitle = item()
+            if imageModifier is not None: #Funciona para hacer modificaciones a posterior de la imagen (post-procesamiento)
+                image = imageModifier(image,**params)
             #pixMap = self.loadPixMap(Image.fromarray(image, 'RGB')) #No puede ser... Para imagenes grandes crashea...
             #Parece que lo anterior provoca un stackOverflow. Debo procesarlo aqui mismo:
             qim : PySide2.QtGui.QImage = PIL.ImageQt.ImageQt(PIL.Image.fromarray(image, 'RGB'))
@@ -329,7 +326,7 @@ class ConvVisualizationWidget(Form, Base):
             return 0
         ########################################################
         def imagesLoaderProc(self,
-                             iterable : 'generator o Lst[str]',
+                             iterable : 'generator',
                              canvas : PySide2.QtWidgets.QGraphicsView,
                              imageModifier : Callable = None,
                              params : dict = {}):
@@ -388,9 +385,80 @@ class ConvVisualizationWidget(Form, Base):
             self._graphicWidgets.clear() #Este elemento es necesario para no perder las referencias y que no crashee al limpiar la escena
             self._graphicWidgets = None
         self._n_elements = len(imagesNames)
-        self.executeLoaders(imagesNames, self.canvas2, handler.doGradCAM, {'predictIndex':-1})
+        self.executeGradCAMFromDisk(imagesNames,self.canvas2)
+        #self.executeLoaders(imagesNames, self.canvas2, handler.doGradCAM, {'predictIndex':-1})
         return
 
+    def executeGradCAMFromDisk(self,
+                               images: List[str],
+                               canvas : PySide2.QtWidgets.QGraphicsView) ->None:
+        """
+            Metodo central encargado de la ejecución de las tecnicas de debugging de redes neuronales implementadas asi como de su visualización
+        """
+        self.treeLayerView.setEnabled(False)
+
+        self.progressBar.reset()
+        self.progressBar.setFormat("Loading...");
+        self.progressBar.setRange(0,self._n_elements+1)
+        self.progressBar.setValue(1)
+
+        #Empezamos procesando y guardando las imagenes
+        def loadWindowProc(self,
+                           item : str,
+                           count: int,
+                           handler : PredictionHandler):
+            image,widgetTitle = None,'Grad-CAM'
+            _,imageArray = self.loadImageFromDisk(item)
+            image = PredictionHandler.doGradCAM(handler,imageArray,-1)
+            #pixMap = self.loadPixMap(Image.fromarray(image, 'RGB')) #No puede ser... Para imagenes grandes crashea...
+            #Parece que lo anterior provoca un stackOverflow. Debo procesarlo aqui mismo:
+            qim : PySide2.QtGui.QImage = PIL.ImageQt.ImageQt(PIL.Image.fromarray(image, 'RGB'))
+            from PySide2.QtCore import QRect
+            pixMap : PySide2.QtGui.QPixmap = QPixmap.fromImage(qim).copy(QRect()) #Esencial el copy, sino, crashea
+            self.setUpImageControl(pixMap,title=widgetTitle)
+            self.progressBar.valueChanged.emit(count)
+            return 0
+        ########################################################
+        def imagesLoaderProc(self,
+                             iterable : List[str],
+                             canvas : PySide2.QtWidgets.QGraphicsView):
+            count : int = 1
+            #Hay operaciones que consumen mucha memoria y provocan que Tensorflow crashee. Dejarlo en 1 hasta que se encuentre solución:
+            self._slave_threads_pool.setMaxThreadCount(2)
+            handler = PredictionHandler(self._trained_model,self._preprocessorFunction)
+            for item in iterable:
+                count += 1
+                windowLoader = Worker(loadWindowProc,self,item,count,handler)
+                self._slave_threads_pool.start(windowLoader) #Cargamos todos
+                
+            self._slave_threads_pool.waitForDone() #Esperamos hasta que todos hayan terminado...
+            self._reminder = {} #Reinicializamos el "recordador de parametros opcionales" para que vuelva a preguntar después
+            
+            #Ahora viene el procedimiento de cargar las imagenes procesadas anteriormente al widget:
+            totalWidth : int = 0
+            totalHeight: int = 0
+            prevShape : Tuple[int.int] = None
+            count = 0
+            for window in self._graphicWidgets:
+                totalWidth += window.width() if (count < 2) else 0
+                totalHeight += window.height() if (count%2 == 0) else 0
+                pos = QPointF()
+                if prevShape is not None:
+                    x = count//2 #Mostramos en matriz (n/2)x2
+                    y = count%2
+                    pos = QPointF((prevShape[1]+5)*y,(prevShape[0]+5)*x )
+                proxy = self.onWindowComputed.emit(window,canvas,pos)
+                prevShape = tuple((window.height(),window.width()))
+                count += 1
+        
+            self.progressBar.valueChanged.emit(self._n_elements+1)
+            self.progressBar.setFormat("Finished Loading");
+            canvas.scene().setSceneRect(0, 0,totalWidth+10 , totalHeight+10)
+            return 0
+        ########################################################
+        imagesLoader = Worker(imagesLoaderProc,self,images,canvas)
+        self._master_threads_pool.start(imagesLoader)
+        return
     #####################################
     ##Canvas methods
     def loadImageToCanvas(self,

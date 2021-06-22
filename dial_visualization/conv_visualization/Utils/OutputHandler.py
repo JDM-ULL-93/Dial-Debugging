@@ -8,6 +8,8 @@ import tensorflow as tf
 from typing import TYPE_CHECKING, Any, Dict, List, Optional, Tuple
 from .Handler import Handler
 class OutputHandler(Handler):
+    #More Feature Visualizations : https://github.com/timsainb/tensorflow-2-feature-visualization-notebooks
+    # Pay attention to "0.1-Visualize-receptive-fields-and-features.ipynb"
     def __init__(self, 
                  inputs: List['tf.python.keras.engine.keras_tensor.KerasTensor'], 
                  outputs : List['tf.python.keras.engine.keras_tensor.KerasTensor'],
@@ -73,7 +75,7 @@ class OutputHandler(Handler):
                                    outputIndex:int,
                                    *,
                                    iterations : int = 20,
-                                   learning_rate : float = 10.0) -> np.ndarray:
+                                   learning_rate : float = 1000.0) -> np.ndarray:
 
             feature = self.getSingleFeatureMap(img_array,outputIndex)
             _,gradAsc = self.doGradientAscent(outputIndex,iterations=iterations,learning_rate=learning_rate)
@@ -95,12 +97,21 @@ class OutputHandler(Handler):
             ToDo: Aplicar un mapeado a img_no_activation para que los valores negativos (<127.5 cuando escalados)
             aparezcan en rojo y los valores positivos (>=127.5 cuando escalados) aparezcan en azul
             Cuanto más cerca del umbral, más claros, cuanto menos, mas oscuros.
+            MIRAR seismic color map de mathplotlib
+            MIRAR https://stackoverflow.com/questions/54327272/creating-custom-colormap-for-opencv-python para incorporar
+                  custom colormaps a cv2 
         """
-        activation = self._OutputHandler__model.layers[-1].activation
-        self._OutputHandler__model.layers[-1].activation = None
-        img_no_activation = self.__loadData(img_array)[:, :, index]
-        img_activation = activation(img_no_activation)
-        self._OutputHandler__model.layers[-1].activation = activation
+       
+
+        #lastLayer = self._OutputHandler__model.layers[-1]
+        #if hasattr(lastLayer,"activation"):
+            #activation = lastLayer.activation
+            #lastLayer.activation = None
+        #img_no_activation = self.__loadData(img_array)[:, :, index]
+        img_activation = self.__loadData(img_array)[:, :, index]
+        #img_activation = activation(img_no_activation)
+        #if hasattr(lastLayer,"activation"):
+            #lastLayer.activation = activation
         from .ImageUtils import ImageUtils
         #img_no_activation = ImageUtils.scaleValues(img_no_activation.numpy(),(0,255)).round()
         #img_no_activation = ImageUtils.grayToRGB(img_no_activation)
