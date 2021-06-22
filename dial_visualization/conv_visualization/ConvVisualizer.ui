@@ -197,12 +197,12 @@ background: transparent;</string>
   <customwidget>
    <class>EQGraphicsView</class>
    <extends>QGraphicsView</extends>
-   <header>conv_visualization/extended_widgets/EQGraphicsView</header>
+   <header>./conv_visualization/extended_widgets/EQGraphicsView</header>
   </customwidget>
   <customwidget>
    <class>EQTreeView</class>
    <extends>QTreeView</extends>
-   <header>conv_visualization/extended_widgets/EQTreeView</header>
+   <header>./conv_visualization/extended_widgets/EQTreeView</header>
   </customwidget>
  </customwidgets>
  <resources/>
