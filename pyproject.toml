@@ -1,6 +1,6 @@
 [tool.poetry]
 name = "dial-visualization"
-version = "0.5a0"
+version = "0.2a0"
 description = "Plugin for Dial-App. It adds a node that implement diverse visulization techniques for CNN"
 authors = ["David Afonso <davafons@gmail.com>","Javier Duque Melguizo <javierduquemelguizo@gmail.com>"]
 
@@ -8,15 +8,15 @@ license = "GPL-3.0-only"
 
 readme = "README.md"
 
-repository = "https://github.com/JDM-ULL-93/Dial-Debugging"
-homepage = "https://github.com/JDM-ULL-93/Dial-Debugging"
+repository = "https://github.com/JDM-ULL-93/Dial-Visualization"
+homepage = "https://github.com/JDM-ULL-93/Dial-Visualization"
 
 keywords = ["deep-learning", "dial-app" , "visualization", "CNN"]
 
 [tool.poetry.dependencies]
 python = ">=3.6.0,<=3.8.3"
-dial-core = { git="https://github.com/JDM-ULL-93/dial-core" }
-dial-gui = { git="https://github.com/JDM-ULL-93/dial-gui" }
+#dial-core = { git="https://github.com/JDM-ULL-93/dial-core" }
+#dial-gui = { git="https://github.com/JDM-ULL-93/dial-gui" }
 
 PySide2 = "^5.12.6"
 tensorflow  = "^2.4.0"
