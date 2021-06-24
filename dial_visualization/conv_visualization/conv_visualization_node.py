@@ -14,7 +14,7 @@ class ConvVisualizationNode(Node):
         self, conv_debugger_widget: ConvVisualizationWidget,
     ):
         super().__init__(
-            title="Convolutional Debugger", inner_widget=conv_debugger_widget,
+            title="Convolutional Neural Network Visualization Node", inner_widget=conv_debugger_widget,
         )
 
         self.add_input_port("Model", port_type=Model)

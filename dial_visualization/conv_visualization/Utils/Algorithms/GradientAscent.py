@@ -64,11 +64,11 @@ class GradientAscent(object):
             Luego centramos esos valores entorno al gris (128) con ruido alrededor de forma
             que el algoritmo tenga camino para maximizar.
         """
-        #from ..ImageUtils import ImageUtils
-        #array = ImageUtils.randomArray(shape)
-        #array = array*20.0 + 128.0 #Multiplicamos para aumentar la dispersión y luego desplazamos entorno a 128.
+        from ..ImageUtils import ImageUtils
+        array = ImageUtils.randomArray(shape)
+        array = array*20.0 + 128.0 #Multiplicamos para aumentar la dispersión y luego desplazamos entorno a 128.
         #array = processorFunction(array)
-        array = np.zeros(shape)
+        #array = np.zeros(shape)
         return array[None,...]
 
     def __deprocess_image(self,x):

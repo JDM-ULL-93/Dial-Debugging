@@ -332,15 +332,18 @@ class ConvVisualizationWidget(Form, Base):
                              params : dict = {}):
             count : int = 1
             #Hay operaciones que consumen mucha memoria y provocan que Tensorflow crashee. Dejarlo en 1 hasta que se encuentre solución:
-            self._slave_threads_pool.setMaxThreadCount(1) 
+            self._slave_threads_pool.setMaxThreadCount(1)
             for item in iterable:
                 count += 1
                 windowLoader = Worker(loadWindowProc,self,item,count,imageModifier,params)
                 self._slave_threads_pool.start(windowLoader) #Cargamos todos
-                
             self._slave_threads_pool.waitForDone() #Esperamos hasta que todos hayan terminado...
             self._reminder = {} #Reinicializamos el "recordador de parametros opcionales" para que vuelva a preguntar después
-            
+            if self._graphicWidgets.count(None) != 0:
+                 LOGGER.info("Insufficient Memory or Unkown Error. Some operations could not been resolved")
+                 self.treeLayerView.setEnabled(True)
+                 return
+
             #Ahora viene el procedimiento de cargar las imagenes procesadas anteriormente al widget:
             totalWidth : int = 0
             totalHeight: int = 0
